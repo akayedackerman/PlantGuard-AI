@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Conda
+.env
+.conda
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Training outputs
+runs/
+
+# Datasets
+data/
+
+# Models
+*.pt
+*.pth
+*.onnx
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
