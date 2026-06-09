@@ -2,6 +2,7 @@ import json
 import shutil
 import re
 from pathlib import Path
+
 import pandas as pd
 
 INPUT_ROOT = Path("data/plantseg")
@@ -52,6 +53,7 @@ print(f"Found {len(classes)} classes")
 # =====================================================
 
 for split in ["train", "val"]:
+
     (OUTPUT_ROOT / split / "images").mkdir(
         parents=True,
         exist_ok=True
@@ -71,6 +73,7 @@ stats = {
     "images": 0,
     "labels": 0,
     "polygons": 0,
+    "bad_polygons": 0,
     "skipped": 0,
 }
 
@@ -117,13 +120,27 @@ def convert_split(src_split, dst_split):
                 polygon.append(f"{x / width:.6f}")
                 polygon.append(f"{y / height:.6f}")
 
-            yolo_lines.append(
-                f"{class_id} " + " ".join(polygon)
-            )
+            # -------------------------------------------------
+            # YOLO segmentation validation
+            # -------------------------------------------------
+
+            # Must have x,y pairs
+            if len(polygon) % 2 != 0:
+                stats["bad_polygons"] += 1
+                continue
+
+            # Minimum 3 points = 6 coordinates
+            if len(polygon) < 6:
+                stats["bad_polygons"] += 1
+                continue
+
+            line = f"{class_id} " + " ".join(polygon)
+
+            yolo_lines.append(line)
 
             stats["polygons"] += 1
 
-        # Skip empty annotations
+        # Skip image if no valid polygons remain
         if not yolo_lines:
             continue
 
@@ -185,9 +202,10 @@ with open(yaml_file, "w") as f:
 
 print("\nConversion Complete")
 print("-" * 40)
-print(f"Classes   : {len(classes)}")
-print(f"Images    : {stats['images']}")
-print(f"Labels    : {stats['labels']}")
-print(f"Polygons  : {stats['polygons']}")
-print(f"Skipped   : {stats['skipped']}")
-print(f"Output    : {OUTPUT_ROOT}")
+print(f"Classes      : {len(classes)}")
+print(f"Images       : {stats['images']}")
+print(f"Labels       : {stats['labels']}")
+print(f"Polygons     : {stats['polygons']}")
+print(f"Bad polygons : {stats['bad_polygons']}")
+print(f"Skipped      : {stats['skipped']}")
+print(f"Output       : {OUTPUT_ROOT}")
